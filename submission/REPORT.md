@@ -143,4 +143,7 @@ Mẫu chung của các ca fine-tune sai là urgency thấp. Sáu mẫu tệ nh�
 - [ ] B2 dataset miền riêng
 - [ ] B3 reasoning-trace collapse
 - [ ] B4 quét rank có kiểm soát
-- [ ] B5 HuggingFace Hub
+- [x] B5 HuggingFace Hub — adapter `correct` đã được đăng công khai tại
+  [hieu37/lab21-2A202601227-qwen35-triage-vi](https://huggingface.co/hieu37/lab21-2A202601227-qwen35-triage-vi).
+  Repository chứa cấu hình và trọng số LoRA dùng cho base `unsloth/Qwen3.5-4B`; token
+  xác thực chỉ được nhập qua OAuth thiết bị của Hugging Face và không được lưu trong mã nguồn.
