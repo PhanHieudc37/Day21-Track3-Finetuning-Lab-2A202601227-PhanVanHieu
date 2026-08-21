@@ -22,9 +22,12 @@ BOOTSTRAP = """# @title Setup (chạy ô này trước)
 import os, subprocess, sys
 
 REPO = "https://github.com/PhanHieudc37/Day21-Track3-Finetuning-Lab-2A202601227-PhanVanHieu.git"
-if not os.path.exists("Day21-Track3-Finetuning-Lab"):
-    subprocess.run(["git", "clone", "-q", REPO], check=True)
-os.chdir("Day21-Track3-Finetuning-Lab")
+WORKDIR = "Day21-Track3-Finetuning-Lab"
+if not os.path.exists(WORKDIR):
+    subprocess.run(["git", "clone", "-q", REPO, WORKDIR], check=True)
+os.chdir(WORKDIR)
+subprocess.run(["git", "remote", "set-url", "origin", REPO], check=True)
+subprocess.run(["git", "pull", "--ff-only", "-q"], check=True)
 sys.path.insert(0, "src")
 
 # Install from requirements.txt, NOT a copied list. The copied list is how the
