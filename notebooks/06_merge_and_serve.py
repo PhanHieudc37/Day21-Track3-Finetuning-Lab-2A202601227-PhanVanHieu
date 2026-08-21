@@ -66,9 +66,8 @@ assert delta >= -TOL, (
 
 out = ROOT / "adapters" / "merged"
 merged.save_pretrained(out); tok.save_pretrained(out)
-report.write_json({"before_merge": before, "after_merge": after, "delta": delta,
-                   "tolerance": TOL, "n": len(target)},
-                  "merge_check.json", results_dir=ROOT / "results")
+merge_check = {"before_merge": before, "after_merge": after, "delta": delta,
+               "tolerance": TOL, "n": len(target)}
 del merged; generate.free_memory()
 
 # %% [markdown]
@@ -89,11 +88,28 @@ for extra in ("attn_only", "qlora"):
         available.append(extra)
 
 print("adapter đang nạp:", available)
+assert len(available) >= 2, (
+    "Bonus B1 yêu cầu hot-swap ít nhất 2 adapter trên cùng một base. "
+    "Hãy train hoặc khôi phục adapters/attn_only hay adapters/qlora rồi chạy lại NB6."
+)
 ticket = target[0]["input"]
+hot_swap_outputs = {}
 for name in available:
     model.set_adapter(name)
     out, _ = generate.generate_batch(model, tok, [ticket], system=generate.NAIVE_PROMPT)
+    hot_swap_outputs[name] = out[0]
     print(f"\n[{name}] -> {out[0][:140]}")
+
+# Persist the hot-swap evidence as well as the merge score. Console output disappears
+# with a Colab runtime; the grader needs a durable, machine-checkable artefact.
+merge_check.update({
+    "available_adapters": available,
+    "hot_swap_count": len(available),
+    "hot_swap_ticket": ticket,
+    "hot_swap_outputs": hot_swap_outputs,
+})
+report.write_json(merge_check, "merge_check.json", results_dir=ROOT / "results")
+print("đã ghi results/merge_check.json với bằng chứng merge + hot-swap")
 
 # %% [markdown]
 # ## ✅ Checkpoint NB6

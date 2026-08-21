@@ -4,7 +4,7 @@ PY ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: help setup setup-cpu smoke nb1 nb2 nb3 nb4 nb5 nb6 pipeline pipeline-full test verify colab data clean
+.PHONY: help setup setup-cpu smoke nb1 nb2 nb3 nb4 nb5 nb6 bonus-rank pipeline pipeline-full test verify colab data clean
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -34,6 +34,8 @@ nb5:  ## NB5 — four-group eval + verdict          (GPU, ~10 min)
 	$(BIN)/python notebooks/05_evaluate_and_verdict.py
 nb6:  ## NB6 — merge + adapter hot-swap (OPTIONAL)(GPU, ~10 min)
 	$(BIN)/python notebooks/06_merge_and_serve.py
+bonus-rank:  ## B4 — controlled rank sweep r=8/16/64 (GPU, optional)
+	$(BIN)/python notebooks/07_bonus_rank_sweep.py
 
 pipeline:  ## CORE: NB1 -> NB5 back-to-back with live output (~80 min on a T4)
 	$(BIN)/python scripts/colab_run.py nb1 nb2 nb3 nb4 nb5

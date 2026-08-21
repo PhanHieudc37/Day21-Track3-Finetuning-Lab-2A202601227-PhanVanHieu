@@ -17,8 +17,10 @@ adapters/*/
 !adapters/correct/
 adapters/correct/*
 !adapters/correct/adapter_config.json
+!adapters/correct/adapter_model.safetensors
 data/split/
-data/CUSTOM_DATASET.md
+# B2 requires this provenance/decontamination note to be submitted when present.
+!data/CUSTOM_DATASET.md
 results/*
 !results/.gitkeep
 !results/*.json

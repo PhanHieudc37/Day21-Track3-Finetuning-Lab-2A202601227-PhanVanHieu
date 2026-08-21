@@ -20,6 +20,12 @@ import pathlib
 import subprocess
 import sys
 
+# Windows terminals commonly default to CP1252, while the gatekeeper prints Vietnamese
+# text and symbols such as Δ. Make the required `python scripts/verify.py` command work
+# without asking students to discover and set PYTHONUTF8 first.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
