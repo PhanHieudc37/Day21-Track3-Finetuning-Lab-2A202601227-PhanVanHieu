@@ -16,6 +16,7 @@ import importlib.util
 import json
 import pathlib
 import re
+import subprocess
 
 import pytest
 
@@ -29,6 +30,45 @@ def _bootstrap() -> str:
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod.BOOTSTRAP
+
+
+def _verify_module():
+    """Load scripts/verify.py by path so its integrity helpers can be tested."""
+    spec = importlib.util.spec_from_file_location(
+        "verify_script", ROOT / "scripts" / "verify.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_integrity_hash_is_cross_platform_but_content_sensitive(tmp_path):
+    """An untouched Git checkout must not fail only because Windows uses CRLF."""
+    verify = _verify_module()
+    lf = tmp_path / "lf.jsonl"
+    crlf = tmp_path / "crlf.jsonl"
+    changed = tmp_path / "changed.jsonl"
+    lf.write_bytes(b'{"x": 1}\n{"x": 2}\n')
+    crlf.write_bytes(b'{"x": 1}\r\n{"x": 2}\r\n')
+    changed.write_bytes(b'{"x": 1}\n{"x": 3}\n')
+
+    assert verify._sha(lf) == verify._sha(crlf)
+    assert verify._sha(lf) != verify._sha(changed)
+
+
+@pytest.mark.parametrize("path", [
+    "results/mask_proof.json",
+    "results/runs.csv",
+    "adapters/correct/adapter_model.safetensors",
+    "adapters/correct/adapter_config.json",
+])
+def test_required_submission_artifacts_are_not_gitignored(path):
+    """The GitHub submission option requires these generated files in the repo."""
+    proc = subprocess.run(
+        ["git", "-c", f"safe.directory={ROOT.as_posix()}", "check-ignore", "-q",
+         "--no-index", path],
+        cwd=ROOT,
+    )
+    assert proc.returncode == 1, f"required submission artifact is ignored: {path}"
 
 
 # --- F-21: every path the docs name must exist -------------------------------
@@ -80,6 +120,16 @@ def test_bootstraps_install_from_requirements_not_a_copied_list():
         # a copied list re-pins packages inline; that is exactly the drift F-20 fixed
         inline = re.findall(r'"(transformers|trl|peft|accelerate|datasets|torchao)>=', src)
         assert not inline, f"{name} re-pins {sorted(set(inline))} inline — drift risk"
+
+
+def test_run_all_defaults_to_the_full_submission_eval():
+    """The recommended Colab path must not silently produce a smoke-only submission."""
+    run_all = json.loads((ROOT / "colab" / "Lab21_RUN_ALL.ipynb").read_text(encoding="utf-8"))
+    source = "\n".join(
+        "".join(cell.get("source", [])) for cell in run_all.get("cells", [])
+    )
+    assert 'EVAL_LIMIT   = ""' in source
+    assert 'EVAL_LIMIT   = "8"' not in source
 
 
 # --- F-22: the autopsy must be settled on the task metric, not on train loss ---------

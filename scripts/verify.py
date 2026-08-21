@@ -32,7 +32,12 @@ def check(name: str, status: str, detail: str = "") -> None:
 
 
 def _sha(path: pathlib.Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+    # Git may check text files out with CRLF on Windows when core.autocrlf=true.
+    # The committed reference hashes were produced from LF files, so hashing raw
+    # checkout bytes falsely reports every untouched JSONL file as modified there.
+    # Canonicalize line endings only; all content changes remain detectable.
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()[:16]
 
 
 def _load_json(path: pathlib.Path):
